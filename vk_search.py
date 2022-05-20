@@ -52,11 +52,11 @@ def get_list(hometown, sex, age_from=None, age_to=None, token=VK_TOKEN):
 #                aaa += 1
         offset += count
         params['offset'] = offset
-        time.sleep(0.5)
+        time.sleep(0.1)
 #    print(aaa)
     return users_list
 
 
-us_list = get_list(hometown='Гродно', sex=1, age_from=25, age_to=30)
-print(len(us_list))
-pprint(us_list)
+# us_list = get_list(hometown='Гродно', sex=1, age_from=25, age_to=30)
+# print(len(us_list))
+# pprint(us_list)

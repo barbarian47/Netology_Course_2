@@ -1,4 +1,5 @@
 import requests
+import time
 from pprint import pprint
 from auth_data import VK_USER_ID, VK_TOKEN, v
 
@@ -28,6 +29,7 @@ def create_top_photo_list(id, token=VK_TOKEN):
     top_2 = 0
     top_3 = 0
     while offset <= count_photo:
+        time.sleep(0.15)
         if offset != 0:
             photos_data = vk_photo_data(id=id, offset=offset, token=token)
         for photo in photos_data['response']['items']:
@@ -57,5 +59,5 @@ def create_top_photo_list(id, token=VK_TOKEN):
     return photo_list
 
 
-pprint(create_top_photo_list(id=151127943))
+# pprint(create_top_photo_list(id=151127943))
 #pprint(vk_photo_data(id=151127943))

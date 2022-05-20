@@ -1,6 +1,7 @@
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+from vk_match import vk_match
 from auth_data import api_group_key
 
 vk_session = vk_api.VkApi(token=api_group_key)
@@ -28,11 +29,14 @@ def get_start(id):
     send_msg(id, 'Доброго времени суток!', keyboard)
 
 
+def get_finish(id):
+    send_msg(id, 'Пока! Возвращайтесь!')
+
+
 def get_city(id):
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
     send_msg(id, 'В каком городе будем искать?', keyboard)
-
 
 
 def confirm_city(id, city):
@@ -74,81 +78,109 @@ def change_data(id):
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Город', VkKeyboardColor.PRIMARY)
     keyboard.add_button('Пол', VkKeyboardColor.POSITIVE)
-    keyboard.add_line()
-    keyboard.add_button('Возраст от', VkKeyboardColor.SECONDARY)
-    keyboard.add_button('Возраст до', VkKeyboardColor.SECONDARY)
+    keyboard.add_button('Возраст', VkKeyboardColor.SECONDARY)
     keyboard.add_line()
     keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
     send_msg(id, 'Что хотите изменить?', keyboard)
 
 
-last_msg = ''
+def send_photo(id, current_match):
+    pass
+
+
+flag = ''
 for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
         msg = event.text.lower()
         client_id = event.user_id
 
-        if 'hi' in msg:
+        if msg and client_id not in users_requests and flag == '':
             get_start(client_id)
-            last_msg = ''
-        if msg == 'начнём подбор!':
-            users_requests[client_id] = {'city': '', 'sex': '', 'age_from': '', 'age_to': ''}
+            flag = 'start'
+        if msg == 'завершить общение :(':
+            get_finish(client_id)
+            del users_requests[client_id]
+            flag = ''
+        elif msg == 'начнём подбор!':
+            users_requests[client_id] = {'city': '', 'sex': '', 'age_from': '', 'age_to': '', 'token': ''}
             get_city(client_id)
-            last_msg = 'начнём подбор!'
-        elif last_msg == 'начнём подбор!':
+            flag = 'to_city'
+        elif flag == 'to_city':
             confirm_city(client_id, msg)
-            last_msg = msg
-        if msg == 'да, город верный':
-            city = last_msg
-            users_requests[client_id]['city'] = last_msg
-            last_msg = 'город'
-        if msg == 'изменить город':
-            get_city(client_id)
-            last_msg = 'начнём подбор!'
-        if last_msg == 'город':
+            flag = msg
+        elif msg == 'да, город верный' and flag != 'confirm data':
+            city = flag
+            users_requests[client_id]['city'] = city
+            flag = 'to_sex'
             get_sex(client_id)
-            last_msg = 'пол'
-        if msg == 'парня':
+        elif msg == 'изменить город':
+            get_city(client_id)
+            if users_requests[client_id]['sex'] == '':
+                flag = 'to_city'
+            else:
+                flag = 'change city'
+        elif msg == 'парня' and flag != 'change sex':
             sex = msg
             users_requests[client_id]['sex'] = 2
             get_age_from(client_id)
-            last_msg = 'возраст от'
-        if msg == 'девушку':
+            flag = 'to_age_f'
+        elif msg == 'девушку' and flag != 'change sex':
             sex = msg
             users_requests[client_id]['sex'] = 1
             get_age_from(client_id)
-            last_msg = 'возраст от'
-        elif last_msg == 'возраст от':
+            flag = 'to_age_f'
+        elif flag == 'to_age_f':
             try:
                 age_f = int(msg.strip())
                 users_requests[client_id]['age_from'] = age_f
                 get_age_to(client_id)
-                last_msg = 'возраст до'
+                flag = 'to_age_t'
             except ValueError:
                 send_msg(client_id, 'Что-то пошло не так')
                 get_age_from(client_id)
-        elif last_msg == 'возраст до':
+        elif flag == 'to_age_t':
             try:
                 age_t = int(msg.strip())
                 users_requests[client_id]['age_to'] = age_t
-                last_msg = 'минимум'
+                flag = 'confirm'
                 confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
             except ValueError:
                 send_msg(client_id, 'Что-то пошло не так')
                 get_age_from(client_id)
-        if msg == 'всё верно':
-            send_msg(client_id, 'Работаем')
-        if msg == 'изменить параметры':
+        elif msg == 'всё верно':
+            send_msg(client_id, 'Алгоритм работает! Это может занять какое-то время!')
+            client_match = vk_match(client_id=client_id, users_requests=users_requests)
+            count = 0
+            send_photo(client_id, client_match[client_id][count])
+        elif msg == 'изменить параметры':
             change_data(client_id)
-        if msg == 'город':
+        elif msg == 'город':
             get_city(client_id)
-            last_msg = 'меняем город'
-        elif last_msg == 'меняем город':
+            flag = 'change city'
+        elif flag == 'change city':
+            flag = 'confirm data'
+            new_city = msg
             confirm_city(client_id, msg)
-            last_msg = 'возраст до'
-
+        elif msg == 'да, город верный' and flag == 'confirm data':
+            city = new_city
+            users_requests[client_id]['city'] = city
+            confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
+        elif msg == 'возраст':
+            get_age_from(client_id)
+            flag = 'to_age_f'
+        elif msg == 'пол':
+            flag = 'change sex'
+            get_sex(client_id)
+        elif msg == 'парня' and flag == 'change sex':
+            sex = msg
+            users_requests[client_id]['sex'] = 2
+            confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
+        elif msg == 'девушку' and flag == 'change sex':
+            sex = msg
+            users_requests[client_id]['sex'] = 1
+            confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
 
 
         print(users_requests)
-        print(last_msg)
+        print(flag)
         print(msg)
