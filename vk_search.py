@@ -13,7 +13,17 @@ def vk_users_search(params):
     return response.json()
 
 
-def get_list(hometown, sex, age_from=None, age_to=None, token=VK_TOKEN):
+def get_list(users_requests):
+#    client_id = list(users_requests.keys())[0]
+    hometown = users_requests['city'].title()
+    sex = users_requests['sex']
+    age_from = users_requests['age_from']
+    age_to = users_requests['age_to']
+    if users_requests['token']:
+        token = users_requests['token']
+    else:
+        token = VK_TOKEN
+
     offset = 0
     count = 1000
     fields = 'domain, music, books, interests, movies, relation'
@@ -22,7 +32,7 @@ def get_list(hometown, sex, age_from=None, age_to=None, token=VK_TOKEN):
         'access_token': token,
         'v': v,
         'sex': sex,
-        'hometown': hometown,
+        'hometown': hometown.title(),
         'age_from': age_from,
         'age_to': age_to,
         'offset': offset,
@@ -31,9 +41,8 @@ def get_list(hometown, sex, age_from=None, age_to=None, token=VK_TOKEN):
     }
     matches = vk_users_search(params)
     count_matches = matches['response']['count']
-#    print(count_matches)
     users_list = list()
-#    aaa = 0
+
     while offset <= count_matches:
         if offset != 0:
             matches = vk_users_search(params)
@@ -57,6 +66,6 @@ def get_list(hometown, sex, age_from=None, age_to=None, token=VK_TOKEN):
     return users_list
 
 
-# us_list = get_list(hometown='Гродно', sex=1, age_from=25, age_to=30)
+# us_list = get_list({18380222: {'city': 'скидель', 'sex': 1, 'age_from': 26, 'age_to': 26, 'token': ''}})
 # print(len(us_list))
-# pprint(us_list)
+# print(us_list)

@@ -1,13 +1,19 @@
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from vk_match import vk_match
-from auth_data import api_group_key
+from auth_data import api_group_key, VK_TOKEN
+from vk_search import get_list
+from vk_get_photo import create_top_photo_list
+#from db_write_ request_in import write_in_bd
+from pprint import pprint
+
 
 vk_session = vk_api.VkApi(token=api_group_key)
+vk = vk_session.get_api()
 longpoll = VkLongPoll(vk_session)
 
 users_requests = dict()
+client_match = dict()
 
 
 def send_msg(id, text, keyboard=None):
@@ -84,8 +90,65 @@ def change_data(id):
     send_msg(id, 'Что хотите изменить?', keyboard)
 
 
-def send_photo(id, current_match):
-    pass
+def send_match(id, text):
+    if text > 0:
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button('Давай смотреть!', VkKeyboardColor.POSITIVE)
+        keyboard.add_line()
+        keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+        send_msg(id, f'По Вашему запросу найдено {text} совпадений.', keyboard)
+    else:
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button('Начнём подбор!', VkKeyboardColor.PRIMARY)
+        send_msg(id, 'Нет совпадений. Давайте изменим параметры подбора!', keyboard)
+
+
+def send_photo(id, url):
+    vk.messages.send(user_id=id, attachment=url, random_id=0)
+
+
+def send_person(id, current_match, token):
+    current_data = create_top_photo_list(current_match, token)
+#    pprint(current_data)
+    full_name = current_data['first_name'] + ' ' + current_match['last_name']
+    link = current_data['link']
+    send_msg(id, full_name)
+    send_msg(id, link)
+    for photo in current_data['photo']:
+        url = f"photo{current_data['partner_id']}_{photo[0]}"
+        send_photo(id=id, url=url)
+
+    keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+    keyboard.add_button('В избранное', VkKeyboardColor.POSITIVE)
+    keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
+    keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+    send_msg(id, f'Как Вам {full_name}?', keyboard)
+
+    return current_data
+
+
+def add_to_favorite(id, user_info):
+#    write_in_bd(id, user_info)
+    full_name = user_info['first_name'] + ' ' + user_info['last_name']
+
+    keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+    keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
+    keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+    send_msg(id, f'{full_name} в избранном!', keyboard)
+
+
+def list_isover(id):
+    send_msg(id, 'По данному запросу ничего больше нет(')
+    keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+    keyboard.add_button('Начнём подбор!', VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
+    keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+    send_msg(id, 'Начнём новый подбор?', keyboard)
 
 
 flag = ''
@@ -149,9 +212,11 @@ for event in longpoll.listen():
                 get_age_from(client_id)
         elif msg == 'всё верно':
             send_msg(client_id, 'Алгоритм работает! Это может занять какое-то время!')
-            client_match = vk_match(client_id=client_id, users_requests=users_requests)
-            count = 0
-            send_photo(client_id, client_match[client_id][count])
+#            print(users_requests)
+            client_match[client_id] = get_list(client_id=client_id, users_requests=users_requests[client_id])
+#            print(client_match[client_id])
+            match_count = len(client_match[client_id])
+            send_match(client_id, match_count)
         elif msg == 'изменить параметры':
             change_data(client_id)
         elif msg == 'город':
@@ -179,8 +244,26 @@ for event in longpoll.listen():
             sex = msg
             users_requests[client_id]['sex'] = 1
             confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
+        elif msg == 'давай смотреть!':
+#            pprint(client_match[client_id])
+            count = 0
+            current_match = client_match[client_id][count]
+            if users_requests[client_id]['token']:
+                token = users_requests[client_id]['token']
+            else:
+                token = VK_TOKEN
+            user_info = send_person(client_id, current_match, token)
+        elif msg == 'дальше':
+            count += 1
+            if count < match_count:
+                current_match = client_match[client_id][count]
+                user_info = send_person(client_id, current_match, token)
+            else:
+                list_isover(client_id)
+        elif msg == 'в избранное':
+            add_to_favorite(id=client_id, user_info=user_info)
 
-
-        print(users_requests)
-        print(flag)
-        print(msg)
+        #
+        # print(users_requests)
+        # print(flag)
+        # print(msg)

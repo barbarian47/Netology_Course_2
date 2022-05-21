@@ -19,7 +19,8 @@ def vk_photo_data(id, offset=0, count=50, token=VK_TOKEN):
     return response.json()
 
 
-def create_top_photo_list(id, token=VK_TOKEN):
+def create_top_photo_list(user, token=VK_TOKEN):
+    id = user['id']
     photos_data = vk_photo_data(id, token=token)
     count_photo = photos_data['response']['count']
     offset = 0
@@ -39,25 +40,32 @@ def create_top_photo_list(id, token=VK_TOKEN):
                 top_3 = top_2
                 top_2 = top_1
                 top_1 = photo['likes']['count']
-                photo_info = {photo['id']: top_1, 'url': photo['sizes'][-1]['url']}
+                photo_info = (photo['id'], photo['sizes'][-1]['url'])
                 photo_list.insert(0, photo_info)
             elif photo['likes']['count'] > top_2:
                 if len(photo_list) == 3:
                     photo_list.pop()
                 top_3 = top_2
                 top_2 = photo['likes']['count']
-                photo_info = {photo['id']: top_2, 'url': photo['sizes'][-1]['url']}
+                photo_info = (photo['id'], photo['sizes'][-1]['url'])
                 photo_list.insert(1, photo_info)
             elif photo['likes']['count'] > top_3:
                 if len(photo_list) == 3:
                     photo_list.pop()
                 top_3 = photo['likes']['count']
-                photo_info = {photo['id']: top_3, 'url': photo['sizes'][-1]['url']}
+                photo_info = (photo['id'], photo['sizes'][-1]['url'])
                 photo_list.append(photo_info)
         offset += count
 
-    return photo_list
+    user_data = {
+        'partner_id': user['id'],
+        'link': 'vk.com/' + user['domain'],
+        'first_name': user['first_name'],
+        'last_name': user['last_name'],
+        'photo': photo_list
+    }
+
+    return user_data
 
 
-# pprint(create_top_photo_list(id=151127943))
-#pprint(vk_photo_data(id=151127943))
+#pprint(create_top_photo_list({'id': 54463067, 'first_name': 'Инна', 'last_name': 'Польгуй', 'domain': 'id54463067'}))
