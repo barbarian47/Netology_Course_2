@@ -4,7 +4,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from auth_data import api_group_key, VK_TOKEN
 from vk_search import get_list
 from vk_get_photo import create_top_photo_list
-#from db_write_ request_in import write_in_bd
+from db_write_request_in import write_in_bd
 from pprint import pprint
 
 
