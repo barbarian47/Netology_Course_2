@@ -5,6 +5,7 @@ from auth_data import api_group_key, VK_TOKEN
 from vk_search import get_list
 from vk_get_photo import create_top_photo_list
 from db_write_request_in import write_in_bd
+from db_select import select_favorit_users_from_bd
 from pprint import pprint
 
 
@@ -103,6 +104,15 @@ def send_match(id, text):
         send_msg(id, 'Нет совпадений. Давайте изменим параметры подбора!', keyboard)
 
 
+def get_token(id):
+    keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('Есть токен', VkKeyboardColor.POSITIVE)
+    keyboard.add_button('Нет токена', VkKeyboardColor.PRIMARY)
+    keyboard.add_line()
+    keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+    send_msg(id, 'У Вас есть токен ВК?', keyboard)
+
+
 def send_photo(id, url):
     vk.messages.send(user_id=id, attachment=url, random_id=0)
 
@@ -149,6 +159,11 @@ def list_isover(id):
     keyboard.add_line()
     keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
     send_msg(id, 'Начнём новый подбор?', keyboard)
+
+
+def show_favorite(id):
+    fav_users_list = select_favorit_users_from_bd(id)
+    send_msg(id, f'У Вас в избранном {len(fav_users_list)} человек:')
 
 
 flag = ''
@@ -211,9 +226,27 @@ for event in longpoll.listen():
                 send_msg(client_id, 'Что-то пошло не так')
                 get_age_from(client_id)
         elif msg == 'всё верно':
+            get_token(client_id)
+        elif msg == 'есть токен':
+            flag = msg
+            send_msg(client_id, 'Введите свой токен ВК:')
+        elif flag == 'есть токен':
+            users_requests[client_id]['token'] = msg
+            send_msg(client_id, 'Алгоритм работает! Это может занять какое-то время!')
+            client_match[client_id] = get_list(users_requests=users_requests[client_id])
+            if client_match[client_id] != 'Ошибка токена':
+                match_count = len(client_match[client_id])
+                send_match(client_id, match_count)
+                flag = 'confirm'
+            else:
+                send_msg(client_id, 'Ошибка токена')
+                users_requests[client_id]['token'] = ''
+                flag = 'confirm'
+                get_token(client_id)
+        elif msg == 'нет токена':
             send_msg(client_id, 'Алгоритм работает! Это может занять какое-то время!')
 #            print(users_requests)
-            client_match[client_id] = get_list(client_id=client_id, users_requests=users_requests[client_id])
+            client_match[client_id] = get_list(users_requests=users_requests[client_id])
 #            print(client_match[client_id])
             match_count = len(client_match[client_id])
             send_match(client_id, match_count)
@@ -262,8 +295,5 @@ for event in longpoll.listen():
                 list_isover(client_id)
         elif msg == 'в избранное':
             add_to_favorite(id=client_id, user_info=user_info)
-
-        #
-        # print(users_requests)
-        # print(flag)
-        # print(msg)
+        elif msg == 'избранное':
+            show_favorite(client_id)

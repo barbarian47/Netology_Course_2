@@ -14,7 +14,6 @@ def vk_users_search(params):
 
 
 def get_list(users_requests):
-#    client_id = list(users_requests.keys())[0]
     hometown = users_requests['city'].title()
     sex = users_requests['sex']
     age_from = users_requests['age_from']
@@ -40,7 +39,10 @@ def get_list(users_requests):
         'fields': fields
     }
     matches = vk_users_search(params)
-    count_matches = matches['response']['count']
+    try:
+        count_matches = matches['response']['count']
+    except KeyError:
+        return 'Ошибка токена'
     users_list = list()
 
     while offset <= count_matches:

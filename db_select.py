@@ -1,7 +1,7 @@
 import psycopg2
 from config import host, user, password, db_name
 
-def selec_favorit_users_from_bd():
+def select_favorit_users_from_bd():
     favorit_users_list =[]
 
     try:
@@ -35,4 +35,4 @@ def selec_favorit_users_from_bd():
     return favorit_users_list
 
 if __name__ == "__main__":
-    print(selec_favorit_users_from_bd())
+    print(select_favorit_users_from_bd())

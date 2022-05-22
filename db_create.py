@@ -1,6 +1,7 @@
 import psycopg2
 from config import host, user, password, db_name
 
+
 try:
     #коннектимся к БД
     connection = psycopg2.connect(
@@ -21,23 +22,23 @@ try:
     with connection.cursor() as cursor:
         cursor.execute(
             """CREATE TABLE if not exists  list_id(
-	        id_list serial primary key,
-	        id_VK varchar(40) unique);"""
+            id_list serial primary key,
+            id_VK varchar(40) unique);"""
         )
     with connection.cursor() as cursor:
         cursor.execute(
             """CREATE TABLE if not exists  list_user_param(
-	        id_user_param serial primary key,
-	        id_VK varchar(40) not null references list_id(id_VK),
+            id_user_param serial primary key,
+            id_VK varchar(40) not null references list_id(id_VK),
             first_name varchar(40),
             last_name varchar(40));"""
         )
     with connection.cursor() as cursor:
         cursor.execute(
             """CREATE TABLE if not exists  list_links(
-	        id_links serial primary key,
+            id_links serial primary key,
             id_VK varchar(40) not null references list_id(id_VK),
-	        VK_link varchar(40) not null,
+            VK_link varchar(40) not null,
             link_photo varchar not null)"""
         )
 
