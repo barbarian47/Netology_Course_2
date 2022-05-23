@@ -2,6 +2,7 @@ import requests
 import time
 from pprint import pprint
 from auth_data import VK_TOKEN, v
+from db_select import select_blacklist
 
 
 def vk_users_search(params):
@@ -13,7 +14,7 @@ def vk_users_search(params):
     return response.json()
 
 
-def get_list(users_requests):
+def get_list(id, users_requests):
     hometown = users_requests['city'].title()
     sex = users_requests['sex']
     age_from = users_requests['age_from']
@@ -45,22 +46,26 @@ def get_list(users_requests):
         return 'Ошибка токена'
     users_list = list()
 
+    #Получаем чёрный список пользователя
+    black_list = select_blacklist(id)
+
     while offset <= count_matches:
         if offset != 0:
             matches = vk_users_search(params)
         for user in matches['response']['items']:
-            if user['can_access_closed']:
-                data = dict()
-                data['id'] = user['id']
-                data['first_name'] = user['first_name']
-                data['last_name'] = user['last_name']
-                data['domain'] = user['domain']
-                for field in fields_list:
-                    if field in user and user[field]:
-                        data[field] = user[field]
-                users_list.append(data)
-#            else:
-#                aaa += 1
+#            if user['id'] not in black_list:
+                if user['can_access_closed']:
+                    data = dict()
+                    data['id'] = user['id']
+                    data['first_name'] = user['first_name']
+                    data['last_name'] = user['last_name']
+                    data['domain'] = user['domain']
+                    for field in fields_list:
+                        if field in user and user[field]:
+                            data[field] = user[field]
+                    users_list.append(data)
+    #            else:
+    #                aaa += 1
         offset += count
         params['offset'] = offset
         time.sleep(0.1)

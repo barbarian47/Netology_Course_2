@@ -1,6 +1,7 @@
 import psycopg2
 from config import host, user, password, db_name
 
+
 def select_favorit_users_from_bd():
     favorit_users_list =[]
 
@@ -33,6 +34,13 @@ def select_favorit_users_from_bd():
             connection.close()
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
     return favorit_users_list
+
+
+# возвращает id пользователей в виде set()
+def select_blacklist(client_id):
+    pass
+
+
 
 if __name__ == "__main__":
     print(select_favorit_users_from_bd())

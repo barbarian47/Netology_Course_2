@@ -1,7 +1,7 @@
 import requests
 import time
 from pprint import pprint
-from auth_data import VK_USER_ID, VK_TOKEN, v
+from auth_data import VK_TOKEN, v
 
 
 def vk_photo_data(id, offset=0, count=50, token=VK_TOKEN):

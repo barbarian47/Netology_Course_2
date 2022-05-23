@@ -66,5 +66,10 @@ def write_in_bd(user_info):
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
             return
 
+
+def write_in_blacklist(client_id, user_id):
+    pass
+
+
 if __name__ == "__main__":
     write_in_bd(user_info)

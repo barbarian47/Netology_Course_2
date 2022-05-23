@@ -4,9 +4,8 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from auth_data import api_group_key, VK_TOKEN
 from vk_search import get_list
 from vk_get_photo import create_top_photo_list
-from db_write_request_in import write_in_bd
+from db_write_request_in import write_in_bd, write_in_blacklist
 from db_select import select_favorit_users_from_bd
-from pprint import pprint
 
 
 vk_session = vk_api.VkApi(token=api_group_key)
@@ -119,7 +118,6 @@ def send_photo(id, url):
 
 def send_person(id, current_match, token):
     current_data = create_top_photo_list(current_match, token)
-#    pprint(current_data)
     full_name = current_data['first_name'] + ' ' + current_match['last_name']
     link = current_data['link']
     send_msg(id, full_name)
@@ -129,9 +127,11 @@ def send_person(id, current_match, token):
         send_photo(id=id, url=url)
 
     keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('В чёрный список', VkKeyboardColor.NEGATIVE)
+    keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
     keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
     keyboard.add_button('В избранное', VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
     keyboard.add_line()
     keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
     send_msg(id, f'Как Вам {full_name}?', keyboard)
@@ -140,7 +140,7 @@ def send_person(id, current_match, token):
 
 
 def add_to_favorite(id, user_info):
-#    write_in_bd(id, user_info)
+    write_in_bd(id, user_info)
     full_name = user_info['first_name'] + ' ' + user_info['last_name']
 
     keyboard = VkKeyboard(one_time=True)
@@ -164,6 +164,45 @@ def list_isover(id):
 def show_favorite(id):
     fav_users_list = select_favorit_users_from_bd(id)
     send_msg(id, f'У Вас в избранном {len(fav_users_list)} человек:')
+    for key, value in fav_users_list:
+        full_name = value[0] + ' ' + current_match[1]
+        link = value[2]
+        send_msg(id, f'{full_name} --> {link}')
+
+    keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
+    keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+    send_msg(id, 'Смотрим дальше?', keyboard)
+
+
+def remove_favorite(id, current_match):
+    #Удаление current_match['id'] из БД fav
+    #...
+    add_to_blacklist(id, current_match)
+
+
+def add_to_blacklist(id, current_match):
+    favorite = select_favorit_users_from_bd(id)
+    full_name = current_match['first_name'] + ' ' + current_match['last_name']
+    if current_match['id'] not in favorite:
+        write_in_blacklist(client_id=id, user_id=current_match['id'])
+
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+        keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
+        keyboard.add_line()
+        keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+        send_msg(id, f'{full_name} добавлена в чёрный список и больше не будет появляться в выдаче!', keyboard)
+    else:
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+        keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
+        keyboard.add_line()
+        keyboard.add_button('Переместить из избранного в чёрный список', VkKeyboardColor.SECONDARY)
+        keyboard.add_line()
+        keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+        send_msg(id, f'{full_name} у Вас в избранном. Всё равно хотите переместить в чёрный список?', keyboard)
 
 
 flag = ''
@@ -233,7 +272,7 @@ for event in longpoll.listen():
         elif flag == 'есть токен':
             users_requests[client_id]['token'] = msg
             send_msg(client_id, 'Алгоритм работает! Это может занять какое-то время!')
-            client_match[client_id] = get_list(users_requests=users_requests[client_id])
+            client_match[client_id] = get_list(id=client_id, users_requests=users_requests[client_id])
             if client_match[client_id] != 'Ошибка токена':
                 match_count = len(client_match[client_id])
                 send_match(client_id, match_count)
@@ -245,9 +284,7 @@ for event in longpoll.listen():
                 get_token(client_id)
         elif msg == 'нет токена':
             send_msg(client_id, 'Алгоритм работает! Это может занять какое-то время!')
-#            print(users_requests)
-            client_match[client_id] = get_list(users_requests=users_requests[client_id])
-#            print(client_match[client_id])
+            client_match[client_id] = get_list(id=client_id, users_requests=users_requests[client_id])
             match_count = len(client_match[client_id])
             send_match(client_id, match_count)
         elif msg == 'изменить параметры':
@@ -278,7 +315,6 @@ for event in longpoll.listen():
             users_requests[client_id]['sex'] = 1
             confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
         elif msg == 'давай смотреть!':
-#            pprint(client_match[client_id])
             count = 0
             current_match = client_match[client_id][count]
             if users_requests[client_id]['token']:
@@ -290,6 +326,7 @@ for event in longpoll.listen():
             count += 1
             if count < match_count:
                 current_match = client_match[client_id][count]
+                print(current_match)
                 user_info = send_person(client_id, current_match, token)
             else:
                 list_isover(client_id)
@@ -297,3 +334,7 @@ for event in longpoll.listen():
             add_to_favorite(id=client_id, user_info=user_info)
         elif msg == 'избранное':
             show_favorite(client_id)
+        elif msg == 'в чёрный список':
+            add_to_blacklist(client_id, current_match)
+        elif msg == 'переместить из избранного в чёрный список':
+            remove_favorite(client_id, current_match)
