@@ -2,9 +2,9 @@ import psycopg2
 from config import host, user, password, db_name
 
 
-def select_favorit_users_from_bd():
-    favorit_users_list =[]
+def select_favorit_users_from_bd(client_id):
     try:
+        favorit_users_list =[]
         #коннектимся к БД
         connection = psycopg2.connect(
             host=host,
@@ -21,10 +21,12 @@ def select_favorit_users_from_bd():
             print(f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
 
             cursor.execute(
-                f"""SELECT DISTINCT vk_link FROM list_links;
-                    """
+                f"""SELECT id_vk FROM list_id
+                WHERE id_user_vk = {client_id};"""
             )
-            favorit_users_list = cursor.fetchone()   
+            raw_favorit_users_list = cursor.fetchall()
+            for iter in range(len(raw_favorit_users_list)):
+                favorit_users_list += raw_favorit_users_list[iter]   
     except Exception as _ex:
         print("[INFO] Error PostgreSQL", _ex)
     finally:
@@ -58,7 +60,9 @@ def select_blacklist(client_id):
                 WHERE in_black_list = true AND id_user_vk = {client_id};
                     """
             )
-            blacklist = cursor.fetchone()   
+            raw_blacklist = cursor.fetchall()
+            for iter in range(len(raw_blacklist)):
+                blacklist += raw_blacklist[iter]
     except Exception as _ex:
         print("[INFO] Error PostgreSQL", _ex)
     finally:
@@ -66,10 +70,10 @@ def select_blacklist(client_id):
         if connection:
             connection.close()
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
-        return set(blacklist)
+    return set(blacklist)
 
 
 
 if __name__ == "__main__":
-    #print(select_favorit_users_from_bd())
-    print(select_blacklist(999999990))
+    print(select_favorit_users_from_bd(100000000))
+    #print(select_blacklist(999999990))
