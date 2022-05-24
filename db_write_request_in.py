@@ -7,15 +7,15 @@ from config import host, user, password, db_name
 # first_name - имя из профиля
 # last_name - фамилия из профиля
 
-user_info = {'partner_id': 392697338, 'link': 'vk.com/id392697334', 'first_name': 'Милана', 
-            'last_name': 'Вежель',
+user_info = {'partner_id': 392697333, 'link': 'vk.com/id392697334', 'first_name': 'Милана3', 
+            'last_name': 'Вежель3',
             'photo': [
             (456239027, 'https://sun9-82.userapi.com/s/v1/if1/YDNet6DJyBVK-Mq4DL4AMv3XG2unU3L0OID9MCZVCXUxsPm2fP_-iA_hL0UeVcIx7L8Fosx-.jpg?size=640x640&quality=96&type=album'),
             (456239058, 'https://sun9-71.userapi.com/s/v1/if1/df2M0CT5JJDtL_xmvru7lUz1A1akw-xEdw0nbTFFKQGTA8o2TWv7ZL88q6XUuUCKSFdJv8KI.jpg?size=640x640&quality=96&type=album'),
             (456239028, 'https://sun9-63.userapi.com/s/v1/if1/EeSxOUhXOwqPTRuS0csrf5NHRzmKTtZE2jTod4N9iZVckUyTqf9Fv94JREEec_gIVQ6B0QKu.jpg?size=640x640&quality=96&type=album')
             ]
             }
-id_client = 110000000
+id_client = 11111
 
 def write_in_bd(id_client, user_info):
     id_client = id_client
@@ -118,5 +118,5 @@ def write_in_blacklist(client_id, user_id):
 
 
 if __name__ == "__main__":
-    #write_in_bd(id_client, user_info)
-    write_in_blacklist(999999990, 888888880)
+    write_in_bd(id_client, user_info)
+    #write_in_blacklist(999999992, 888888884)
