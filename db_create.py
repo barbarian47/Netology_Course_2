@@ -21,15 +21,8 @@ try:
     #Запросы на создание таблиц в БД
     with connection.cursor() as cursor:
         cursor.execute(
-            """CREATE TABLE if not exists  list_id(
-            id_list serial primary key,
-            id_VK varchar(40) unique);"""
-        )
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """CREATE TABLE if not exists  list_user_param(
-            id_user_param serial primary key,
-            id_VK varchar(40) not null references list_id(id_VK),
+            """CREATE TABLE if not exists  list_user_param(    
+            id_VK varchar(40) primary key,
             first_name varchar(40),
             last_name varchar(40));"""
         )
@@ -37,10 +30,24 @@ try:
         cursor.execute(
             """CREATE TABLE if not exists  list_links(
             id_links serial primary key,
-            id_VK varchar(40) not null references list_id(id_VK),
+            id_VK varchar(40) not null references list_user_param(id_VK),
             VK_link varchar(40) not null,
             link_photo varchar not null)"""
         )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """CREATE TABLE if not exists  list_id(
+                id_VK varchar(40) not null references list_user_param(id_VK),
+                id_user_vk varchar(40) not null,
+                in_black_list boolean,
+                constraint id_vk_and_user_vk primary key (id_VK, id_user_vk));"""
+        )
+    
+    
+    
+    
+    
+    
 
 
 except Exception as _ex:
