@@ -5,15 +5,15 @@ from config import host, user, password, db_name
 
 def select_favorit_users_from_bd(client_id):
     try:
-        favorit_users_list =[]
+        favorit_users_list = []
         favorit_users_params = []
-        favorit_users ={}
+        favorit_users = {}
         #коннектимся к БД
         connection = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
+            host = host,
+            user = user,
+            password = password,
+            database = db_name
         )
         connection.autocommit = True
         #Проверка коннекта к БД
@@ -22,10 +22,9 @@ def select_favorit_users_from_bd(client_id):
                 "SELECT version();"
             )
             print(f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
-
             cursor.execute(
                 f"""SELECT id_vk FROM list_id
-                WHERE id_user_vk = {client_id};"""
+                WHERE id_user_vk = {client_id} AND in_black_list != TRUE;"""
             )
             raw_favorit_users_list = cursor.fetchall()
             for iter in range(len(raw_favorit_users_list)):
@@ -38,7 +37,6 @@ def select_favorit_users_from_bd(client_id):
                 )
                 raw_favorit_users_params = cursor.fetchall()[0]
                 favorit_users_params.append(raw_favorit_users_params)
-
             for iter in range(len(favorit_users_list)):
                 new_key_value = {favorit_users_list[iter] : favorit_users_params[iter]}
                 favorit_users.update(new_key_value)
@@ -88,8 +86,43 @@ def select_blacklist(client_id):
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
     return set(blacklist)
 
+def all_clients():
+    all_clients = set()
+    try:
+        #коннектимся к БД
+        connection = psycopg2.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=db_name
+        )
+        connection.autocommit = True
+        #Проверка коннекта к БД
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT version();"
+            )
+            print(f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
+
+            cursor.execute(
+                f"""SELECT DISTINCT id_user_vk FROM list_id;"""
+            )
+            raw_all_clients = cursor.fetchall()
+            for iter in raw_all_clients:
+                all_clients.add(iter[0])
+
+    except Exception as _ex:
+        print("[INFO] Error PostgreSQL", _ex)
+    finally:
+        #разрываем коннект
+        if connection:
+            connection.close()
+            print("[INFO]=====>PostgreSQL vk_user_list connection closed")
+    return all_clients
+
 
 
 if __name__ == "__main__":
-    print(select_favorit_users_from_bd(11111))
+    #print(select_favorit_users_from_bd(11111))
     #print(select_blacklist(999999990))
+    print(all_clients())
