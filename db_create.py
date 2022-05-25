@@ -1,3 +1,16 @@
+"""Модуль создания таблиц и связей в БД.
+Перед запуском модуля необходимо создать БД PostgreSQL.
+
+В файл config.py необходимо поместить следующие данные для подключения к созданной БД:
+host = "127.0.0.1" - для локально развернутой БД
+user = "" - имя пользователя БД.
+password = "" - пароль доступа к БД.
+db_name = "" - название БД.
+
+После запуска скрипт сформирует таблицы и взаимосвязи в БД.
+В консоль принтами выведены события создания и разрыва коннектора с БД.
+"""
+
 import psycopg2
 from config import host, user, password, db_name
 
@@ -18,15 +31,13 @@ try:
         )
         print(f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
 
-    #Запросы на создание таблиц в БД
-    with connection.cursor() as cursor:
         cursor.execute(
             """CREATE TABLE if not exists  list_user_param(    
             id_VK integer primary key,
             first_name varchar(40),
             last_name varchar(40));"""
         )
-    with connection.cursor() as cursor:
+
         cursor.execute(
             """CREATE TABLE if not exists  list_links(
             id_links serial primary key,
@@ -35,7 +46,7 @@ try:
             link_photo varchar not null,
             id_photo integer not null);"""
         )
-    with connection.cursor() as cursor:
+
         cursor.execute(
             """CREATE TABLE if not exists  list_id(
                 id_VK integer not null references list_user_param(id_VK),

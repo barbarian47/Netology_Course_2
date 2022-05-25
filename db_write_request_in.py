@@ -19,6 +19,9 @@ id_client = 11111
 
 
 def write_in_bd(id_client, user_info):
+    """
+    
+    """
     id_client = id_client
     id_partner = user_info.get('partner_id')
     link = user_info.get('link')
@@ -29,10 +32,10 @@ def write_in_bd(id_client, user_info):
     try:
         # коннектимся к БД
         connection = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
+            host = host,
+            user = user,
+            password = password,
+            database = db_name
         )
         connection.autocommit = True
         # Проверка коннекта к БД
@@ -79,10 +82,10 @@ def write_in_blacklist(id_client, id_partner):
     try:
         # коннектимся к БД
         connection = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
+            host = host,
+            user = user,
+            password = password,
+            database = db_name
         )
         connection.autocommit = True
         # Проверка коннекта к БД
@@ -120,4 +123,4 @@ def write_in_blacklist(id_client, id_partner):
 
 if __name__ == "__main__":
     #write_in_bd(id_client, user_info)
-    write_in_blacklist(11111, 392697332)
+    #write_in_blacklist(11111, 392697332)
