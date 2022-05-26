@@ -149,4 +149,31 @@ def all_clients():
 
 
 def select_count(id_client):
-    pass
+    try:
+        #коннектимся к БД
+        connection = psycopg2.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=db_name
+        )
+        connection.autocommit = True
+        #Проверка коннекта к БД
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT version();"
+            )
+            print(f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
+            cursor.execute(
+                f"""SELECT id_client, count, params FROM id_client_sesion
+                WHERE id_client = {id_client};"""
+            )
+    except Exception as _ex:
+        print("[INFO] Error PostgreSQL", _ex)
+    finally:
+        #разрываем коннект
+        if connection:
+            connection.close()
+            print("[INFO]=====>PostgreSQL vk_user_list connection closed")
+    return all_clients
+

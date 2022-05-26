@@ -133,5 +133,35 @@ def write_in_blacklist(id_client, id_partner):
             return
 
 
-def write_count(id_client, count):
-    pass
+def write_count(id_client, count, params):   
+    try:
+        # коннектимся к БД
+        connection = psycopg2.connect(
+            host = host,
+            user = user,
+            password = password,
+            database = db_name
+        )
+        connection.autocommit = True
+        # Проверка коннекта к БД
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT version();"
+            )
+            print(
+                f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
+            try:
+                cursor.execute(
+                    f"""INSERT INTO id_client_sesion(id_client, count, params) 
+                    VALUES ({id_client}, {count}, {params});"""
+                )
+            except Exception as _ex:
+                print("[INFO]PostgreSQL vk_user_list write write_list_id")
+    except Exception as _ex:
+        print("[INFO] Error PostgreSQL", _ex)
+    finally:
+        # разрываем коннект
+        if connection:
+            connection.close()
+            print("[INFO]=====>PostgreSQL vk_user_list connection closed")
+            return
