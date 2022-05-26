@@ -132,4 +132,6 @@ def write_in_blacklist(id_client, id_partner):
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
             return
 
-if __name__ == "__main__":
+
+def write_count(id_client, count):
+    pass

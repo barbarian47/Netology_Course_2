@@ -4,8 +4,8 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from auth_data import api_group_key, VK_TOKEN
 from vk_search import get_list, client_info
 from vk_get_photo import create_top_photo_list
-from db_write_request_in import write_in_bd, write_in_blacklist
-from db_select import select_favorit_users_from_bd
+from db_write_request_in import write_in_bd, write_in_blacklist, write_count
+from db_select import select_favorit_users_from_bd, all_clients
 
 
 vk_session = vk_api.VkApi(token=api_group_key)
@@ -343,12 +343,17 @@ for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
         msg = event.text.lower()
         client_id = event.user_id
-        if msg and client_id not in users_requests and flag == '':
+        if msg and flag == '':
+            clients = all_clients()
+            if client_id in clients:
+                count = select_count(client_id)
+            else:
+                count = 0
             get_start(client_id)
             flag = 'start'
         if msg == 'завершить общение :(':
+            write_count(client_id, count)
             get_finish(client_id)
-            del users_requests[client_id]
             flag = ''
         elif msg == 'начнём подбор!':
             users_requests[client_id] = {'city': '', 'sex': '', 'age_from': '', 'age_to': '', 'token': ''}

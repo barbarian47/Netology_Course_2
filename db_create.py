@@ -55,10 +55,10 @@ try:
                     in_black_list boolean,
                     constraint id_vk_and_user_vk primary key (id_VK, id_user_vk));"""
         )
-    except Exception as _ex:
-        print("[INFO] Error PostgreSQL", _ex)
-    finally:
-        #разрываем коннект
-        if connection:
-            connection.close()
-            print("[INFO]=====>PostgreSQL vk_user_list connection closed")
+except Exception as _ex:
+    print("[INFO] Error PostgreSQL", _ex)
+finally:
+    #разрываем коннект
+    if connection:
+        connection.close()
+        print("[INFO]=====>PostgreSQL vk_user_list connection closed")

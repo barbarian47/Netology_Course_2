@@ -62,6 +62,7 @@ def select_favorit_users_from_bd(client_id):
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
     return favorit_users
 
+
 # возвращает id пользователей в виде set()
 def select_blacklist(client_id):
     """Функция получения черного списка из БД.
@@ -105,6 +106,7 @@ def select_blacklist(client_id):
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
     return set(blacklist)
 
+
 def all_clients():
     """Функция получения списка всех юзеров использующих бота.
     Функция не принимает аргументов.
@@ -145,4 +147,6 @@ def all_clients():
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
     return all_clients
 
-if __name__ == "__main__":
+
+def select_count(id_client):
+    pass
