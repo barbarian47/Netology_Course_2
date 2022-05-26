@@ -122,5 +122,5 @@ def write_in_blacklist(id_client, id_partner):
             return
 
 if __name__ == "__main__":
-    #write_in_bd(id_client, user_info)
-    #write_in_blacklist(11111, 392697332)
+    write_in_bd(id_client, user_info)
+    write_in_blacklist(11111, 392697332)

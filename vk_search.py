@@ -1,11 +1,19 @@
 import requests
 import time
-from pprint import pprint
 from auth_data import VK_TOKEN, v
 from db_select import select_blacklist
 
 
 def vk_users_search(params):
+    """
+    Функция делает запрос через API ВКонтактке
+
+    :param params: параметры запроса
+    :type params: dict
+
+    :return response: json с ответом от API
+    :type response: dict
+    """
     api = 'https://api.vk.com/method/'
     method = 'users.search'
     url = api + method
@@ -15,6 +23,19 @@ def vk_users_search(params):
 
 
 def get_list(id, users_requests):
+    """
+    Функция ищет пользователей подходящих под заданные параметры
+
+    :param id: id клиента сформировавшего запрос
+    :type id: int
+    :param users_requests: словарь с параметрами запроса
+    :type users_requests: dict
+
+    :return users_list: список словарей с подходящими пользователями
+    :type users_list: list
+
+    :exception KeyError: не корректный токен доступа
+    """
     hometown = users_requests['city'].title()
     sex = users_requests['sex']
     age_from = users_requests['age_from']
@@ -46,14 +67,14 @@ def get_list(id, users_requests):
         return 'Ошибка токена'
     users_list = list()
 
-    #Получаем чёрный список пользователя
+    # Получаем чёрный список пользователя
     black_list = select_blacklist(id)
 
     while offset <= count_matches:
         if offset != 0:
             matches = vk_users_search(params)
         for user in matches['response']['items']:
-#            if user['id'] not in black_list:
+            if user['id'] not in black_list:
                 if user['can_access_closed']:
                     data = dict()
                     data['id'] = user['id']
@@ -64,15 +85,32 @@ def get_list(id, users_requests):
                         if field in user and user[field]:
                             data[field] = user[field]
                     users_list.append(data)
-    #            else:
-    #                aaa += 1
+
         offset += count
         params['offset'] = offset
         time.sleep(0.1)
-#    print(aaa)
+
     return users_list
 
 
-# us_list = get_list({18380222: {'city': 'скидель', 'sex': 1, 'age_from': 26, 'age_to': 26, 'token': ''}})
-# print(len(us_list))
-# print(us_list)
+def client_info(id):
+    """
+    Функция получает данные собеседника
+
+    :param id: id собеседника
+    :type id: int
+
+    :return response: json с информацией о собеседнике
+    :type response: dict
+    """
+    api = 'https://api.vk.com/method/'
+    method = 'users.get'
+    url = api + method
+    params = {
+        'access_token': VK_TOKEN,
+        'v': v,
+        'user_ids': id
+    }
+    response = requests.get(url, params=params)
+
+    return response.json()

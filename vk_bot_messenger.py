@@ -2,7 +2,7 @@ import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from auth_data import api_group_key, VK_TOKEN
-from vk_search import get_list
+from vk_search import get_list, client_info
 from vk_get_photo import create_top_photo_list
 from db_write_request_in import write_in_bd, write_in_blacklist
 from db_select import select_favorit_users_from_bd
@@ -17,6 +17,16 @@ client_match = dict()
 
 
 def send_msg(id, text, keyboard=None):
+    """
+    Функция отправляет сообщение собеседнику
+
+    :param id: id собеседника
+    :type id: int
+    :param text: текст сообщения
+    :type : str
+    :param keyboard: клавиатура с необходимыми кнопками
+    :type : class instance 'vk_api.keyboard.VkKeyboard'
+    """
     message = {
         'user_id': id,
         'message': text,
@@ -30,22 +40,58 @@ def send_msg(id, text, keyboard=None):
 
 
 def get_start(id):
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начнём подбор!', VkKeyboardColor.PRIMARY)
-    send_msg(id, 'Доброго времени суток!', keyboard)
+    """
+    Функция отправляет кнопку предлагающую начать подбор
+
+    :param id: id собеседника
+    :type id: int
+    """
+    fav_list = select_favorit_users_from_bd(id)
+    name = client_info(id)['response'][0]['first_name']
+    if len(fav_list) > 0:
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button('Начнём подбор!', VkKeyboardColor.PRIMARY)
+        keyboard.add_line()
+        keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+        send_msg(id, f'Привет, {name}', keyboard)
+    else:
+        keyboard = VkKeyboard(one_time=True)
+        keyboard.add_button('Начнём подбор!', VkKeyboardColor.PRIMARY)
+        send_msg(id, f'Привет, {name}', keyboard)
 
 
 def get_finish(id):
-    send_msg(id, 'Пока! Возвращайтесь!')
+    """
+    Функция отправляет сообщение при завершении сеанса общения
+
+    :param id: id собеседника
+    :type id: int
+    """
+    name = client_info(id)['response'][0]['first_name']
+    send_msg(id, f'Пока, {name}! Возвращайтесь!')
 
 
 def get_city(id):
+    """
+    Функция отправляет сообщение с просьбой ввести город в котором будем искать
+
+    :param id: id собеседника
+    :type id: int
+    """
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
     send_msg(id, 'В каком городе будем искать?', keyboard)
 
 
 def confirm_city(id, city):
+    """
+    Функция отправляет кнопки для изменения и подтверждения города
+
+    :param id: id собеседника
+    :type id: int
+    :param city: название города которое ввёл собеседник
+    :type city: str
+    """
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Да, город верный', VkKeyboardColor.POSITIVE)
     keyboard.add_button('Изменить город', VkKeyboardColor.PRIMARY)
@@ -55,6 +101,12 @@ def confirm_city(id, city):
 
 
 def get_sex(id):
+    """
+    Функция отправляет кнопки для выбора пола партнёра
+
+    :param id: id собеседника
+    :type id: int
+    """
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Парня', VkKeyboardColor.SECONDARY)
     keyboard.add_button('Девушку', VkKeyboardColor.PRIMARY)
@@ -64,14 +116,40 @@ def get_sex(id):
 
 
 def get_age_from(id):
+    """
+    Функция отправляет сообщение с запросом возраста с которого будет вестись поиск
+
+    :param id: id собеседника
+    :type id: int
+    """
     send_msg(id, 'Со скольки лет?')
 
 
 def get_age_to(id):
+    """
+    Функция отправляет сообщение с запросом возраста до которого будет вестись поиск
+
+    :param id: id собеседника
+    :type id: int
+    """
     send_msg(id, 'До скольки лет?')
 
 
 def confirm_data(id, city, sex, age_from, age_to):
+    """
+    Функция отправляет кнопки для изменения и подтверждения параметров поиска
+
+    :param id: id собеседника
+    :type id: int
+    :param city: название города
+    :type city: str
+    :param sex: пол партнёра
+    :type sex: str
+    :param age_from: нижняя планка возраста
+    :type age_from: int
+    :param age_to: верхняя планка возраста
+    :type age_to: int
+    """
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Всё верно', VkKeyboardColor.SECONDARY)
     keyboard.add_button('Изменить параметры', VkKeyboardColor.PRIMARY)
@@ -81,6 +159,12 @@ def confirm_data(id, city, sex, age_from, age_to):
 
 
 def change_data(id):
+    """
+    Функция отправляет кнопки для выбора параметра который необходимо изменить
+
+    :param id: id собеседника
+    :type id: int
+    """
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Город', VkKeyboardColor.PRIMARY)
     keyboard.add_button('Пол', VkKeyboardColor.POSITIVE)
@@ -91,6 +175,14 @@ def change_data(id):
 
 
 def send_match(id, text):
+    """
+    Функция отправляет сообщение с количеством совпадений и кнопку для начала просмотра
+
+    :param id: id собеседника
+    :type id: int
+    :param text: количество совпадений по заданным параметрам
+    :type text: int
+    """
     if text > 0:
         keyboard = VkKeyboard(one_time=True)
         keyboard.add_button('Давай смотреть!', VkKeyboardColor.POSITIVE)
@@ -104,6 +196,12 @@ def send_match(id, text):
 
 
 def get_token(id):
+    """
+    Функция отправляет кнопки для выяснения наличия токена доступа
+
+    :param id: id собеседника
+    :type id: int
+    """
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Есть токен', VkKeyboardColor.POSITIVE)
     keyboard.add_button('Нет токена', VkKeyboardColor.PRIMARY)
@@ -113,10 +211,33 @@ def get_token(id):
 
 
 def send_photo(id, url):
+    """
+    Функция отправляет фотографию
+
+    :param id: id собеседника
+    :type id: int
+    :param url: вложение
+    :type url: str
+    """
     vk.messages.send(user_id=id, attachment=url, random_id=0)
 
 
-def send_person(id, current_match, token):
+def send_person(id, current_match, token=VK_TOKEN):
+    """
+    Функция отправляет сообщения с данными о партнёре и навигационные кнопки
+
+    вызывает функцию с получением данных о фото, формирует ссылки на фото
+
+    :param id: id собеседника
+    :type id: int
+    :param current_match: словарь с данными о текущем партнёре
+    :type current_match: dict
+    :param token: токен доступа
+    :type token: str
+
+    :return current_data: словарь с данными о пользователя и 3 самые популярные фото
+    :type current_data: dict
+    """
     current_data = create_top_photo_list(current_match, token)
     full_name = current_data['first_name'] + ' ' + current_match['last_name']
     link = current_data['link']
@@ -140,6 +261,14 @@ def send_person(id, current_match, token):
 
 
 def add_to_favorite(id, user_info):
+    """
+    Функция добавляет партнера в избранное и записывает в БД
+
+    :param id: id собеседника
+    :type id: int
+    :param user_info: словарь с данными о пользователя и 3 самые популярные фото
+    :type user_info: dict
+    """
     write_in_bd(id, user_info)
     full_name = user_info['first_name'] + ' ' + user_info['last_name']
 
@@ -151,7 +280,13 @@ def add_to_favorite(id, user_info):
     send_msg(id, f'{full_name} в избранном!', keyboard)
 
 
-def list_isover(id):
+def list_is_over(id):
+    """
+    Функция отправляет сообщение о том что список совпадений закончился и навигационные кнопки
+
+    :param id: id собеседника
+    :type id: int
+    """
     send_msg(id, 'По данному запросу ничего больше нет(')
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
@@ -162,11 +297,17 @@ def list_isover(id):
 
 
 def show_favorite(id):
-    fav_users_list = select_favorit_users_from_bd(id)
-    send_msg(id, f'У Вас в избранном {len(fav_users_list)} человек:')
-    for key, value in fav_users_list:
-        full_name = value[0] + ' ' + current_match[1]
-        link = value[2]
+    """
+    Функция отправляет сообщения с данными о списке избранных получив данные из БД
+
+    :param id: id собеседника
+    :type id: int
+    """
+    fav_list = select_favorit_users_from_bd(id)
+    send_msg(id, f'У Вас в избранном {len(fav_list)} человек:')
+    for key in fav_list:
+        full_name = fav_list[key][0] + ' ' + fav_list[key][1]
+        link = fav_list[key][2]
         send_msg(id, f'{full_name} --> {link}')
 
     keyboard = VkKeyboard(one_time=True)
@@ -176,33 +317,25 @@ def show_favorite(id):
     send_msg(id, 'Смотрим дальше?', keyboard)
 
 
-def remove_favorite(id, current_match):
-    #Удаление current_match['id'] из БД fav
-    #...
-    add_to_blacklist(id, current_match)
-
-
 def add_to_blacklist(id, current_match):
-    favorite = select_favorit_users_from_bd(id)
-    full_name = current_match['first_name'] + ' ' + current_match['last_name']
-    if current_match['id'] not in favorite:
-        write_in_blacklist(client_id=id, user_id=current_match['id'])
+    """
+    Функция добавляет пользователя в черный список и делает запись в БД
 
-        keyboard = VkKeyboard(one_time=True)
-        keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
-        keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
-        keyboard.add_line()
-        keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
-        send_msg(id, f'{full_name} добавлена в чёрный список и больше не будет появляться в выдаче!', keyboard)
-    else:
-        keyboard = VkKeyboard(one_time=True)
-        keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
-        keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
-        keyboard.add_line()
-        keyboard.add_button('Переместить из избранного в чёрный список', VkKeyboardColor.SECONDARY)
-        keyboard.add_line()
-        keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
-        send_msg(id, f'{full_name} у Вас в избранном. Всё равно хотите переместить в чёрный список?', keyboard)
+    :param id: id собеседника
+    :type id: int
+    :param current_match: словарь с данными о пользователе
+    :type current_match: dict
+    """
+    full_name = current_match['first_name'] + ' ' + current_match['last_name']
+
+    write_in_blacklist(id_client=id, id_partner=current_match['id'])
+
+    keyboard = VkKeyboard(one_time=True)
+    keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+    keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
+    keyboard.add_line()
+    keyboard.add_button('Завершить общение :(', VkKeyboardColor.NEGATIVE)
+    send_msg(id, f'{full_name} добавлена в чёрный список и больше не будет появляться в выдаче!', keyboard)
 
 
 flag = ''
@@ -210,7 +343,6 @@ for event in longpoll.listen():
     if event.type == VkEventType.MESSAGE_NEW and event.to_me:
         msg = event.text.lower()
         client_id = event.user_id
-
         if msg and client_id not in users_requests and flag == '':
             get_start(client_id)
             flag = 'start'
@@ -326,15 +458,12 @@ for event in longpoll.listen():
             count += 1
             if count < match_count:
                 current_match = client_match[client_id][count]
-                print(current_match)
                 user_info = send_person(client_id, current_match, token)
             else:
-                list_isover(client_id)
+                list_is_over(client_id)
         elif msg == 'в избранное':
             add_to_favorite(id=client_id, user_info=user_info)
         elif msg == 'избранное':
             show_favorite(client_id)
         elif msg == 'в чёрный список':
             add_to_blacklist(client_id, current_match)
-        elif msg == 'переместить из избранного в чёрный список':
-            remove_favorite(client_id, current_match)

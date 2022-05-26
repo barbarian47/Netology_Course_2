@@ -1,10 +1,24 @@
 import requests
 import time
-from pprint import pprint
 from auth_data import VK_TOKEN, v
 
 
 def vk_photo_data(id, offset=0, count=50, token=VK_TOKEN):
+    """
+    Функция получает данные о фото пользователя
+
+    :param id: id пользователя чьи фото пытаемся получить
+    :type id: int
+    :param offset: первый номер фото с которое получаем
+    :type offset: int
+    :param count: количество получаемых фото
+    :type count: int
+    :param token: токен доступа клиента, если есть
+    :type token: str
+
+    :return response: json с данными о фото пользователя
+    :type response: dict
+    """
     api = 'https://api.vk.com/method/photos.getAll'
     params = {
         'owner_id': id,
@@ -20,6 +34,17 @@ def vk_photo_data(id, offset=0, count=50, token=VK_TOKEN):
 
 
 def create_top_photo_list(user, token=VK_TOKEN):
+    """
+    Функция отфильтровывает 3 самые залайканные фотографии пользователя и формирует словарь с данными
+
+    :param user: словарь с данными о пользователе чьи фото хотим получить
+    :type user: dict
+    :param token: токен доступа пользователя сформировавшего запрос
+    :type token: str
+
+    :return user_data: словарь с данными о пользователя и 3 самые популярные фото
+    :type user_data: dict
+    """
     id = user['id']
     photos_data = vk_photo_data(id, token=token)
     count_photo = photos_data['response']['count']
@@ -66,6 +91,3 @@ def create_top_photo_list(user, token=VK_TOKEN):
     }
 
     return user_data
-
-
-#pprint(create_top_photo_list({'id': 54463067, 'first_name': 'Инна', 'last_name': 'Польгуй', 'domain': 'id54463067'}))
