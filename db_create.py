@@ -57,10 +57,9 @@ try:
         )
         cursor.execute(
             """CREATE TABLE if not exists  id_client_sesion(
-                    id_session serial primary key,
-                    id_client integer not null,
-                    count integer not null,
-                    params json not null);"""
+                    id_client integer primary key,
+                    _count integer,
+                    params jsonb);"""
         )
 except Exception as _ex:
     print("[INFO] Error PostgreSQL", _ex)

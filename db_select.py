@@ -165,9 +165,10 @@ def select_count(id_client):
             )
             print(f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
             cursor.execute(
-                f"""SELECT id_client, count, params FROM id_client_sesion
+                f"""SELECT id_client, _count, params FROM id_client_sesion
                 WHERE id_client = {id_client};"""
             )
+            all_clients = cursor.fetchall()
     except Exception as _ex:
         print("[INFO] Error PostgreSQL", _ex)
     finally:
@@ -175,5 +176,7 @@ def select_count(id_client):
         if connection:
             connection.close()
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
-    return all_clients
+    return all_clients[0]
 
+if __name__ == "__main__":
+    print(select_count(18380222))

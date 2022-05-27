@@ -152,10 +152,15 @@ def write_count(id_client, count, params):
                 f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
             try:
                 cursor.execute(
-                    f"""INSERT INTO id_client_sesion(id_client, count, params) 
-                    VALUES ({id_client}, {count}, {params});"""
+                    f"""INSERT INTO id_client_sesion(id_client, _count, params) 
+                    VALUES({id_client}, {count}, '{params}');;"""
                 )
             except Exception as _ex:
+                cursor.execute(
+                    f"""UPDATE id_client_sesion
+                    SET _count = {count}
+                    WHERE id_client = {id_client};"""
+                )
                 print("[INFO]PostgreSQL vk_user_list write write_list_id")
     except Exception as _ex:
         print("[INFO] Error PostgreSQL", _ex)
@@ -165,3 +170,6 @@ def write_count(id_client, count, params):
             connection.close()
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
             return
+
+if __name__ == "__main__":
+    write_count(18380222, 2, '{"city": "скидель", "sex": 1, "age_from": 28, "age_to": 28, "token": ""}')
