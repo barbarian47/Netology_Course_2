@@ -149,6 +149,12 @@ def all_clients():
 
 
 def select_count(id_client):
+    """Функция получения данных счетчика из БД.
+    :id_client - id VK пользователя, который обращается к БД.
+    :type - integer
+    :return - (id_client, count,
+        {'sex': , 'city': '', 'token': '', 'age_to': , 'age_from': })
+    """
     try:
         #коннектимся к БД
         connection = psycopg2.connect(

@@ -133,7 +133,17 @@ def write_in_blacklist(id_client, id_partner):
             return
 
 
-def write_count(id_client, count, params):   
+def write_count(id_client, count, params):
+    """Функция счетчика.
+    Функция записывает в БД счетчик обращений к боту.
+    :id_client - id VK пользователя, который обращается к боту.
+    :type - integer
+    :count - счетчик
+    :type - integer
+    :param - параметры запроса в формате:
+    {"city": "", "sex": , "age_from": , "age_to": , "token": ""}
+    :type - json
+    """   
     try:
         # коннектимся к БД
         connection = psycopg2.connect(
@@ -158,7 +168,7 @@ def write_count(id_client, count, params):
             except Exception as _ex:
                 cursor.execute(
                     f"""UPDATE id_client_sesion
-                    SET _count = {count}
+                    SET _count = {count}, params = '{params}'
                     WHERE id_client = {id_client};"""
                 )
                 print("[INFO]PostgreSQL vk_user_list write write_list_id")
@@ -172,4 +182,4 @@ def write_count(id_client, count, params):
             return
 
 if __name__ == "__main__":
-    write_count(18380222, 2, '{"city": "скидель", "sex": 1, "age_from": 28, "age_to": 28, "token": ""}')
+    write_count(18380222, 2, '{"city": "скидель", "sex": 1, "age_from": 30, "age_to": 28, "token": ""}')
