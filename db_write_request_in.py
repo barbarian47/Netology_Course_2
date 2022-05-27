@@ -147,10 +147,10 @@ def write_count(id_client, count, params):
     try:
         # коннектимся к БД
         connection = psycopg2.connect(
-            host = host,
-            user = user,
-            password = password,
-            database = db_name
+            host=host,
+            user=user,
+            password=password,
+            database=db_name
         )
         connection.autocommit = True
         # Проверка коннекта к БД

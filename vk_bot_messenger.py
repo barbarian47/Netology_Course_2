@@ -5,7 +5,7 @@ from auth_data import api_group_key, VK_TOKEN
 from vk_search import get_list, client_info
 from vk_get_photo import create_top_photo_list
 from db_write_request_in import write_in_bd, write_in_blacklist, write_count
-from db_select import select_favorit_users_from_bd, all_clients
+from db_select import select_favorit_users_from_bd, all_clients, select_count
 
 
 vk_session = vk_api.VkApi(token=api_group_key)
@@ -53,6 +53,7 @@ def get_start(id):
         keyboard.add_button('Начнём подбор!', VkKeyboardColor.PRIMARY)
         keyboard.add_line()
         keyboard.add_button('ИЗБРАННОЕ', VkKeyboardColor.PRIMARY)
+        keyboard.add_button('Дальше', VkKeyboardColor.SECONDARY)
         send_msg(id, f'Привет, {name}', keyboard)
     else:
         keyboard = VkKeyboard(one_time=True)
@@ -346,17 +347,26 @@ for event in longpoll.listen():
         if msg and flag == '':
             clients = all_clients()
             if client_id in clients:
-                count = select_count(client_id)
-            else:
-                count = 0
+                last_session = select_count(client_id)
+                count = last_session[1]
+                users_requests[client_id] = last_session[2]
+                client_match[client_id] = get_list(id=client_id, users_requests=users_requests[client_id])
+                match_count = len(client_match[client_id])
+                if last_session[2]['token'] == '':
+                    token = VK_TOKEN
+                else:
+                    token = last_session[2]['token']
             get_start(client_id)
             flag = 'start'
         if msg == 'завершить общение :(':
-            write_count(client_id, count)
+            param = f'{{"city": "{users_requests[client_id]["city"]}", "sex": "{users_requests[client_id]["sex"]}", '
+            param += f'"age_from": "{users_requests[client_id]["age_from"]}", "age_to": '
+            param += f'"{users_requests[client_id]["age_to"]}", "token": "{users_requests[client_id]["token"]}"}}'
+            write_count(client_id, count, param)
             get_finish(client_id)
             flag = ''
         elif msg == 'начнём подбор!':
-            users_requests[client_id] = {'city': '', 'sex': '', 'age_from': '', 'age_to': '', 'token': ''}
+            users_requests[client_id] = {"city": "", "sex": "", "age_from": "", "age_to": "", "token": ""}
             get_city(client_id)
             flag = 'to_city'
         elif flag == 'to_city':
@@ -364,29 +374,29 @@ for event in longpoll.listen():
             flag = msg
         elif msg == 'да, город верный' and flag != 'confirm data':
             city = flag
-            users_requests[client_id]['city'] = city
+            users_requests[client_id]["city"] = city
             flag = 'to_sex'
             get_sex(client_id)
         elif msg == 'изменить город':
             get_city(client_id)
-            if users_requests[client_id]['sex'] == '':
+            if users_requests[client_id]["sex"] == "":
                 flag = 'to_city'
             else:
                 flag = 'change city'
         elif msg == 'парня' and flag != 'change sex':
             sex = msg
-            users_requests[client_id]['sex'] = 2
+            users_requests[client_id]["sex"] = 2
             get_age_from(client_id)
             flag = 'to_age_f'
         elif msg == 'девушку' and flag != 'change sex':
             sex = msg
-            users_requests[client_id]['sex'] = 1
+            users_requests[client_id]["sex"] = 1
             get_age_from(client_id)
             flag = 'to_age_f'
         elif flag == 'to_age_f':
             try:
                 age_f = int(msg.strip())
-                users_requests[client_id]['age_from'] = age_f
+                users_requests[client_id]["age_from"] = age_f
                 get_age_to(client_id)
                 flag = 'to_age_t'
             except ValueError:
@@ -395,7 +405,7 @@ for event in longpoll.listen():
         elif flag == 'to_age_t':
             try:
                 age_t = int(msg.strip())
-                users_requests[client_id]['age_to'] = age_t
+                users_requests[client_id]["age_to"] = age_t
                 flag = 'confirm'
                 confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
             except ValueError:
@@ -407,7 +417,7 @@ for event in longpoll.listen():
             flag = msg
             send_msg(client_id, 'Введите свой токен ВК:')
         elif flag == 'есть токен':
-            users_requests[client_id]['token'] = msg
+            users_requests[client_id]["token"] = msg
             send_msg(client_id, 'Алгоритм работает! Это может занять какое-то время!')
             client_match[client_id] = get_list(id=client_id, users_requests=users_requests[client_id])
             if client_match[client_id] != 'Ошибка токена':
@@ -416,7 +426,7 @@ for event in longpoll.listen():
                 flag = 'confirm'
             else:
                 send_msg(client_id, 'Ошибка токена')
-                users_requests[client_id]['token'] = ''
+                users_requests[client_id]["token"] = ""
                 flag = 'confirm'
                 get_token(client_id)
         elif msg == 'нет токена':
@@ -435,7 +445,7 @@ for event in longpoll.listen():
             confirm_city(client_id, msg)
         elif msg == 'да, город верный' and flag == 'confirm data':
             city = new_city
-            users_requests[client_id]['city'] = city
+            users_requests[client_id]["city"] = city
             confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
         elif msg == 'возраст':
             get_age_from(client_id)
@@ -445,17 +455,21 @@ for event in longpoll.listen():
             get_sex(client_id)
         elif msg == 'парня' and flag == 'change sex':
             sex = msg
-            users_requests[client_id]['sex'] = 2
+            users_requests[client_id]["sex"] = 2
             confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
         elif msg == 'девушку' and flag == 'change sex':
             sex = msg
-            users_requests[client_id]['sex'] = 1
+            users_requests[client_id]["sex"] = 1
             confirm_data(id=client_id, city=city, sex=sex, age_from=age_f, age_to=age_t)
         elif msg == 'давай смотреть!':
             count = 0
+            param = f'{{"city": "{users_requests[client_id]["city"]}", "sex": "{users_requests[client_id]["sex"]}", '
+            param += f'"age_from": "{users_requests[client_id]["age_from"]}", "age_to": '
+            param += f'"{users_requests[client_id]["age_to"]}", "token": "{users_requests[client_id]["token"]}"}}'
+            write_count(client_id, count, param)
             current_match = client_match[client_id][count]
-            if users_requests[client_id]['token']:
-                token = users_requests[client_id]['token']
+            if users_requests[client_id]["token"]:
+                token = users_requests[client_id]["token"]
             else:
                 token = VK_TOKEN
             user_info = send_person(client_id, current_match, token)
