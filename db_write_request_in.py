@@ -124,10 +124,29 @@ def write_in_blacklist(id_client, id_partner):
             return
 
 
-def write_count(id_client, count, params):   
+def write_count(id_client, count, params):
+    """Функция счетчика.
+    Функция записывает в БД счетчик обращений к боту.
+    :id_client - id VK пользователя, который обращается к боту.
+    :type - integer
+    :count - счетчик
+    :type - integer
+    :param - параметры запроса в формате:
+    {"city": "", "sex": , "age_from": , "age_to": , "token": ""}
+    :type - json
+    """   
     try:
         # коннектимся к БД
+<<<<<<< HEAD
         connection=db_connect(host, user, password, db_name)
+=======
+        connection = psycopg2.connect(
+            host=host,
+            user=user,
+            password=password,
+            database=db_name
+        )
+>>>>>>> 2ec3e0e3d5423d438777cee02410385c3c7b32a6
         connection.autocommit = True
         # Проверка коннекта к БД
         with connection.cursor() as cursor:
@@ -138,10 +157,15 @@ def write_count(id_client, count, params):
                 f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
             try:
                 cursor.execute(
-                    f"""INSERT INTO id_client_sesion(id_client, count, params) 
-                    VALUES ({id_client}, {count}, {params});"""
+                    f"""INSERT INTO id_client_sesion(id_client, _count, params) 
+                    VALUES({id_client}, {count}, '{params}');;"""
                 )
             except Exception as _ex:
+                cursor.execute(
+                    f"""UPDATE id_client_sesion
+                    SET _count = {count}, params = '{params}'
+                    WHERE id_client = {id_client};"""
+                )
                 print("[INFO]PostgreSQL vk_user_list write write_list_id")
     except Exception as _ex:
         print("[INFO] Error PostgreSQL", _ex)
@@ -151,3 +175,6 @@ def write_count(id_client, count, params):
             connection.close()
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
             return
+
+if __name__ == "__main__":
+    write_count(18380222, 2, '{"city": "скидель", "sex": 1, "age_from": 30, "age_to": 28, "token": ""}')

@@ -135,6 +135,12 @@ def all_clients():
 
 
 def select_count(id_client):
+    """Функция получения данных счетчика из БД.
+    :id_client - id VK пользователя, который обращается к БД.
+    :type - integer
+    :return - (id_client, count,
+        {'sex': , 'city': '', 'token': '', 'age_to': , 'age_from': })
+    """
     try:
         #коннектимся к БД
         connection=db_connect(host, user, password, db_name)
@@ -146,9 +152,10 @@ def select_count(id_client):
             )
             print(f"[INFO]=====>Connected PostgreSQL vk_user_list {cursor.fetchone()}")
             cursor.execute(
-                f"""SELECT id_client, count, params FROM id_client_sesion
+                f"""SELECT id_client, _count, params FROM id_client_sesion
                 WHERE id_client = {id_client};"""
             )
+            all_clients = cursor.fetchall()
     except Exception as _ex:
         print("[INFO] Error PostgreSQL", _ex)
     finally:
@@ -156,4 +163,11 @@ def select_count(id_client):
         if connection:
             connection.close()
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
+<<<<<<< HEAD
     return all_clients
+=======
+    return all_clients[0]
+
+if __name__ == "__main__":
+    print(select_count(18380222))
+>>>>>>> 2ec3e0e3d5423d438777cee02410385c3c7b32a6

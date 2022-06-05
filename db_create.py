@@ -53,10 +53,9 @@ try:
                     in_black_list boolean,
                     constraint id_vk_and_user_vk primary key (id_VK, id_user_vk));"""
             """CREATE TABLE if not exists  id_client_sesion(
-                    id_session serial primary key,
-                    id_client integer not null,
-                    count integer not null,
-                    params json not null);"""
+                    id_client integer primary key,
+                    _count integer,
+                    params jsonb);"""
         )
 except Exception as _ex:
     print("[INFO] Error PostgreSQL", _ex)
