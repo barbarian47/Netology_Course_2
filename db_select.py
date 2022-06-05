@@ -3,6 +3,7 @@
 """
 import psycopg2
 from config import host, user, password, db_name
+from db_create import db_connect
 
 
 def select_favorit_users_from_bd(client_id):
@@ -22,12 +23,7 @@ def select_favorit_users_from_bd(client_id):
         favorit_users_params = []
         favorit_users = {}
         #коннектимся к БД
-        connection = psycopg2.connect(
-            host = host,
-            user = user,
-            password = password,
-            database = db_name
-        )
+        connection=db_connect(host, user, password, db_name)
         connection.autocommit = True
         #Проверка коннекта к БД
         with connection.cursor() as cursor:
@@ -77,12 +73,7 @@ def select_blacklist(client_id):
     blacklist = []
     try:
         #коннектимся к БД
-        connection = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
-        )
+        connection=db_connect(host, user, password, db_name)
         connection.autocommit = True
         #Проверка коннекта к БД
         with connection.cursor() as cursor:
@@ -119,12 +110,7 @@ def all_clients():
     all_clients = set()
     try:
         #коннектимся к БД
-        connection = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
-        )
+        connection=db_connect(host, user, password, db_name)
         connection.autocommit = True
         #Проверка коннекта к БД
         with connection.cursor() as cursor:
@@ -151,12 +137,7 @@ def all_clients():
 def select_count(id_client):
     try:
         #коннектимся к БД
-        connection = psycopg2.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db_name
-        )
+        connection=db_connect(host, user, password, db_name)
         connection.autocommit = True
         #Проверка коннекта к БД
         with connection.cursor() as cursor:
@@ -176,4 +157,3 @@ def select_count(id_client):
             connection.close()
             print("[INFO]=====>PostgreSQL vk_user_list connection closed")
     return all_clients
-

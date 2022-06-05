@@ -3,6 +3,7 @@
 """
 import psycopg2
 from config import host, user, password, db_name
+from db_create import db_connect
 
 
 def write_in_bd(id_client, user_info):
@@ -33,12 +34,7 @@ def write_in_bd(id_client, user_info):
     last_name = user_info.get('last_name')
     try:
         # коннектимся к БД
-        connection = psycopg2.connect(
-            host = host,
-            user = user,
-            password = password,
-            database = db_name
-        )
+        connection=db_connect(host, user, password, db_name)
         connection.autocommit = True
         # Проверка коннекта к БД
         with connection.cursor() as cursor:
@@ -92,12 +88,7 @@ def write_in_blacklist(id_client, id_partner):
     """
     try:
         # коннектимся к БД
-        connection = psycopg2.connect(
-            host = host,
-            user = user,
-            password = password,
-            database = db_name
-        )
+        connection=db_connect(host, user, password, db_name)
         connection.autocommit = True
         # Проверка коннекта к БД
         with connection.cursor() as cursor:
@@ -136,12 +127,7 @@ def write_in_blacklist(id_client, id_partner):
 def write_count(id_client, count, params):   
     try:
         # коннектимся к БД
-        connection = psycopg2.connect(
-            host = host,
-            user = user,
-            password = password,
-            database = db_name
-        )
+        connection=db_connect(host, user, password, db_name)
         connection.autocommit = True
         # Проверка коннекта к БД
         with connection.cursor() as cursor:
